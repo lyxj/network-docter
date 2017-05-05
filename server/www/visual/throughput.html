@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>THROUGHTPUT</title>
+    <script src="echarts.js"></script>
+    <script src="jquery.js"></script>
+</head>
+<body>
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+	<h1>Throughput</h1>
+<h2>吞吐量</h2>
+
+<p>网络中的数据是由一个个数据包组成，防火墙对每个数据包的处理要耗费资源。吞吐量是指在没有帧丢失的情况下，设备能够接受的最大速率。其测试方法是：在测试中以一定速率发送一定数量的帧，并计算待测设备传输的帧，如果发送的帧与接收的帧数量相等，那么就将发送速率提高并重新测试；如果接收帧少于发送帧则降低发送速率重新测试，直至得出最终结果。吞吐量测试结果以比特/秒或字节/秒表示。</p>
+
+    <div id="throughput" style="height:500px" ></div>
+	<script type="text/javascript">
+        var  myChart = echarts.init(document.getElementById('throughput'));
+        var cap_time=[],dw=[],up=[];
+		
+		function getthroughput() {
+			$.ajax({
+				type: "post",
+				async: false,
+				url: "db_require_throughput.php",
+				data: {},
+				dataType: "json",
+				success: function(result){
+					if(result){
+						for( var i = 0; i < result.length; i++){
+							if(i % 2 == 0) cap_time.push(result[i].cap_time);
+							switch(result[i].direction){
+								case "NETPERF_1":
+									dw.push(result[i].avg);
+									break;
+								case "NETPERF_2":
+									up.push(result[i].avg);
+									break;
+								default:
+									break;
+							}
+						}
+
+					}
+				},
+				error: function(errmsg) {
+					alert("Ajax获取服务器数据出错了！"+ errmsg);
+				}
+			});
+		}
+		getthroughput();
+        var  option = {
+			title :{text:'Throughput(bytes/s)'},
+		    tooltip : {
+				trigger: 'axis',
+				formatter: function(params) {
+					var result =  params[0].name;
+					for (var i = 0; i< params.length; i++)
+						result = result + '<br/>' + params[i].seriesName + ' : ' + params[i].value + ' (bytes/s)';
+				   return result;
+				}
+			},
+			legend: {
+				data:['下载速率','上传速率']
+			},
+			toolbox: {
+				show : true,
+				feature : {
+					mark : {show: true},
+					dataView : {show: true, readOnly: false},
+					magicType : {show: true, type: ['line', 'bar']},
+					restore : {show: true},
+					saveAsImage : {show: true}
+				}
+			},
+			dataZoom : {
+				show : true,
+				realtime : true,
+				start : 0,
+				end : 100
+			},
+            xAxis : 
+			[
+				{	
+					type : 'category',
+					boundaryGap : false,
+					axisLine: {onZero: false},
+					data : cap_time,
+					showAllSymbol: true
+				}	
+			],
+            yAxis : 
+			[
+				{
+					type : 'value',
+					axisLabel : {formatter: '{value} bytes/s'}
+				}
+			],
+            series: [
+				{
+					name:"下载速率",
+					type:"line",
+					data:dw,
+					stack:"dw",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},
+				{
+					name:"上传速率",
+					type:"line",
+					data:up,
+					"smooth" : true,
+					stack:"up",
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}					
+				}
+			]
+		};
+                    
+                    
+        // 为echarts对象加载数据	
+        myChart.setOption(option);
+    </script>
+</body>
+
+
+

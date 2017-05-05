@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>主动测量数据</title>
+    <script src="echarts.js"></script>
+    <script src="jquery.js"></script>
+</head>
+<body>
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div id="lmrtt" style="height:400px"></div>
+	<script type="text/javascript">
+        var  myChart = echarts.init(document.getElementById('lmrtt'));
+        var cap_time=[],avg=[],min=[],max=[],med=[];
+		
+		function getlmrtt() {
+			$.ajax({
+				type: "post",
+				async: false,
+				url: "db_require_lmrtt.php",
+				data: {},
+				dataType: "json",
+				success: function(result){
+					if(result){
+						for(var i = 0 ; i < result.length; i++){
+							cap_time.push(result[i].cap_time);
+							avg.push(result[i].avg);
+							min.push(result[i].min);
+							max.push(result[i].max);
+							med.push(result[i].med);
+						}
+					}
+				},
+				error: function(errmsg) {
+					alert("Ajax获取服务器数据出错了！"+ errmsg);
+				}
+			});
+			return cap_time, avg; 
+		}
+		getlmrtt();
+        var  option = {
+			title :{text:'LMRTT(ms)'},
+		    tooltip : {
+				trigger: 'axis',
+				formatter: function(params) {
+					return params[0].name + '<br/>'
+                   + params[0].seriesName + ' : ' + params[0].value + ' (m^3/s)<br/>'
+                   + params[1].seriesName + ' : ' + -params[1].value + ' (mm)';
+				}
+			},
+			legend: {
+				data:['RTT_avg','RTT_min','RTT_max','RTT_med']
+			},
+			toolbox: {
+				show : true,
+				feature : {
+					mark : {show: true},
+					dataView : {show: true, readOnly: false},
+					magicType : {show: true, type: ['line', 'bar']},
+					restore : {show: true},
+					saveAsImage : {show: true}
+				}
+			},
+			dataZoom : {
+				show : true,
+				realtime : true,
+				start : 0,
+				end : 100
+			},
+            xAxis : 
+			[
+				{	
+					type : 'category',
+					boundaryGap : false,
+					axisLine: {onZero: false},
+					data : cap_time,
+					showAllSymbol: true
+				}	
+			],
+            yAxis : [{type : 'value'}],
+            series: [
+				{
+					name:"RTT_avg",
+					type:"line",
+					data:avg,
+					stack:"avg",
+					itemStyle : { normal: {label : {show: true}}}
+				},
+				{
+					name:"RTT_min",
+					type:"line",
+					data:min,
+					stack:"min",
+					itemStyle : { normal: {label : {show: true}}}
+				},
+				{
+					name:"RTT_max",
+					type:"line",
+					data:max,
+					stack:"max",
+					itemStyle : { normal: {label : {show: true}}}
+				},
+				{
+					name:"RTT_med",
+					type:"line",
+					data:med,
+					stack:"med",
+					itemStyle : { normal: {label : {show: true}}}
+				},				
+			]
+		};
+                    
+                    
+        // 为echarts对象加载数据	
+        myChart.setOption(option);
+    </script>
+</body>
+
+
+

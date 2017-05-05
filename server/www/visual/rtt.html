@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>RTT</title>
+    <script src="echarts.js"></script>
+    <script src="jquery.js"></script>
+</head>
+<body>
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <h1>RTT</h1>
+    <h2>Round Trip Latency/往返时延</h2>
+    <p>往返延迟指的是从发送端（路由器）发送数据开始，到发送端收到来自接收端的确认（接收端收到数据后便立即发送确认），总共经历的时延。这是计算机网络中重要的性能指标。一般来说，时延越低越好，尤其是当人们上网看视频，打电话或者是玩游戏时。</p>
+	<div id="rtt" style="height:500px"></div>
+	<script type="text/javascript">
+        var  myChart = echarts.init(document.getElementById('rtt'));
+        var cap_time=[],avg_360=[],avg_baidu=[],avg_iqiyi=[],avg_qq=[];
+		var avg_sina=[],avg_sogou=[],avg_taobao=[],avg_tudou=[],avg_weibo=[],avg_youku=[];
+		function getrtt() {
+			$.ajax({
+				type: "post",
+				async: false,
+				url: "db_require_rtt.php",
+				data: {},
+				dataType: "json",
+				success: function(result){
+					if(result){
+						for(var i = 0 ; i < result.length; i++){
+							if( i%10 == 0) cap_time.push(result[i].cap_time);
+							switch (result[i].dstip){
+								case "www.360.cn":
+									avg_360.push(result[i].avg);
+									break;
+								case "www.baidu.com":
+									avg_baidu.push(result[i].avg);
+									break;
+								case "www.iqiyi.com":
+									avg_iqiyi.push(result[i].avg);
+									break;
+								case "www.qq.com": 
+									avg_qq.push(result[i].avg);
+									break;
+								case "www.sina.com.cn":
+									avg_sina.push(result[i].avg);
+									break;
+								case "www.sogou.com":
+									avg_sogou.push(result[i].avg);
+									break;
+								case "www.taobao.com":
+									avg_taobao.push(result[i].avg);
+									break;
+								case "www.tudou.com":
+									avg_tudou.push(result[i].avg);
+									break;
+								case "www.weibo.com":
+									avg_weibo.push(result[i].avg);
+									break;
+								case "www.youku.com":
+									avg_youku.push(result[i].avg);
+									break;
+								default:
+									break;
+							}
+						}
+					}
+				},
+				error: function(errmsg) {
+					alert("Ajax获取服务器数据出错了！"+ errmsg);
+				}
+			});
+		}
+		getrtt();
+        var  option = {
+			title :{text:'RTT(ms)'},
+		    tooltip : {
+				trigger: 'axis',
+				formatter: function(params) {
+					var result =  params[0].name;
+					for (var i = 0; i< params.length; i++)
+						result = result + '<br/>' + params[i].seriesName + ' : ' + params[i].value + ' (ms)';
+				   return result;
+				}
+			},
+			legend: {
+			    selected: { '360':false,"爱奇艺":false,"QQ":false,"新浪":false,"搜狗":false,"淘宝":false,"土豆":false,"微博":false,"优酷":false},
+				data:['360','百度','爱奇艺','QQ','新浪','搜狗','淘宝','土豆','微博','优酷']
+			},
+			toolbox: {
+				show : true,
+				feature : {
+					mark : {show: true},
+					dataView : {show: true, readOnly: false},
+					magicType : {show: true, type: ['line', 'bar']},
+					restore : {show: true},
+					saveAsImage : {show: true}
+				}
+			},
+			dataZoom : {
+				show : true,
+				realtime : true,
+				start : 0,
+				end : 100
+			},
+            xAxis : 
+			[
+				{	
+					type : 'category',
+					boundaryGap : false,
+					axisLine: {onZero: false},
+					data : cap_time,
+					showAllSymbol: true
+				}	
+			],
+            yAxis : 
+			[
+				{
+					type : 'value',
+					axisLabel : {formatter: '{value} ms'}
+				}
+			],
+            series: [
+				{
+					name:"360",
+					type:"line",
+					data:avg_360,
+					stack:"avg_360",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}, labelline: {show:true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},
+				{
+					name:"百度",
+					type:"line",
+					data:avg_baidu,
+					stack:"avg_baidu",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},
+				{
+					name:"爱奇艺",
+					type:"line",
+					data:avg_iqiyi,
+					stack:"avg_iqiyi",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},
+				{
+					name:"QQ",
+					type:"line",
+					data:avg_qq,
+					stack:"avg_qq",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},		
+				{
+					name:"新浪",
+					type:"line",
+					data:avg_sina,
+					stack:"avg_sina",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},	
+				{
+					name:"搜狗",
+					type:"line",
+					data:avg_sogou,
+					stack:"avg_sogou",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},	
+				{
+					name:"淘宝",
+					type:"line",
+					data:avg_taobao,
+					stack:"avg_taobao",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},		
+				{
+					name:"土豆",
+					type:"line",
+					data:avg_tudou,
+					stack:"avg_tudou",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},
+				{
+					name:"微博",
+					type:"line",
+					data:avg_weibo,
+					stack:"avg_weibo",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},	
+				{
+					name:"优酷",
+					type:"line",
+					data:avg_youku,
+					stack:"avg_youku",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				}					
+			]
+		};
+                      
+        // 为echarts对象加载数据	
+        myChart.setOption(option);
+    </script>
+</body>
+
+
+

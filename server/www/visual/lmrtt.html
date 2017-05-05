@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>LMRTT</title>
+    <script src="echarts.js"></script>
+    <script src="jquery.js"></script>
+</head>
+<body>
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+	<h1>LMRTT</h1>
+	<h2>Last Mile Round Trip Latency /最后一公里时延</h2>
+	<p>延迟中相当大的一部分往往花在了最后几公里，而不是在横跨大洋或大陆时产生的，这就是所谓的“最后一公里”问题。为了让你家或你的办公室接入互联网，本地ISP需要在附近安装多个路由收集信号，然后再将信号转发到本地的路由节点。连接类型、路由技术和部署方法五花八门，分组传输中的这前几跳往往要花数十毫秒时间才能到达ISP的主路由器。
+数据从用户发出到用户的互联网服务提供商（ISP)并返回用户所需要的时间，最早是指电信服务商在公用模拟电话通信网建设中接入工程的入户部分。</p>
+    <div id="lmrtt" style="height:500px" ></div>
+	<script type="text/javascript">
+        var  myChart = echarts.init(document.getElementById('lmrtt'));
+        var cap_time=[],avg=[],min=[],max=[],med=[];
+		
+		function getlmrtt() {
+			$.ajax({
+				type: "post",
+				async: false,
+				url: "db_require_lmrtt.php",
+				data: {},
+				dataType: "json",
+				success: function(result){
+					if(result){
+						for(var i = 0 ; i < result.length; i++){
+							cap_time.push(result[i].cap_time);
+							avg.push(result[i].avg);
+							min.push(result[i].min);
+							max.push(result[i].max);
+							med.push(result[i].med);
+						}
+					}
+				},
+				error: function(errmsg) {
+					alert("Ajax获取服务器数据出错了！"+ errmsg);
+				}
+			});
+			return cap_time, avg; 
+		}
+		getlmrtt();
+        var  option = {
+			title :{text:'LMRTT(ms)'},
+		    tooltip : {
+				trigger: 'axis',
+				formatter: function(params) {
+					var result =  params[0].name;
+					for (var i = 0; i< params.length; i++)
+						result = result + '<br/>' + params[i].seriesName + ' : ' + params[i].value + ' (ms)';
+				   return result;
+				}
+			},
+			legend: {
+				data:['RTT_avg','RTT_min','RTT_max','RTT_med'],
+				selected:{'RTT_min':false,'RTT_max':false,'RTT_med':false}
+			},
+			toolbox: {
+				show : true,
+				feature : {
+					mark : {show: true},
+					dataView : {show: true, readOnly: false},
+					magicType : {show: true, type: ['line', 'bar']},
+					restore : {show: true},
+					saveAsImage : {show: true}
+				}
+			},
+			dataZoom : {
+				show : true,
+				realtime : true,
+				start : 0,
+				end : 100
+			},
+            xAxis : 
+			[
+				{	
+					type : 'category',
+					boundaryGap : false,
+					axisLine: {onZero: false},
+					data : cap_time,
+					showAllSymbol: true
+				}	
+			],
+            yAxis : 
+			[
+				{
+					type : 'value',
+					axisLabel : {formatter: '{value} ms'}
+				}
+			],
+            series: [
+				{
+					name:"RTT_avg",
+					type:"line",
+					data:avg,
+					stack:"avg",
+					"smooth" : true,
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},
+				{
+					name:"RTT_min",
+					type:"line",
+					data:min,
+					"smooth" : true,
+					stack:"min",
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}					
+				},
+				{
+					name:"RTT_max",
+					type:"line",
+					data:max,
+					"smooth" : true,
+					stack:"max",
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				},
+				{
+					name:"RTT_med",
+					type:"line",
+					data:med,
+					"smooth" : true,
+					stack:"med",
+					itemStyle : { normal: {label : {show: true}}},
+					markPoint : {
+						symbolSize: 80,
+						data : [
+							{type : 'max', name: '最大值'},
+							{type : 'min', name: '最小值'}
+						]
+					},
+					markLine : {
+						data : [
+						{type : 'average', name: '平均值'}
+						]
+					}
+				}				
+			]
+		};
+                    
+                    
+        // 为echarts对象加载数据	
+        myChart.setOption(option);
+    </script>
+</body>
+
+
+
