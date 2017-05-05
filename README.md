@@ -1,2 +1,2 @@
 # network-docter
-the code repositor of network-docter
+the code repository of network-docter
