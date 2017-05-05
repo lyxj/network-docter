@@ -1,0 +1,20 @@
+#!/bin/ash/
+# upload the devices connected to router to server
+DEVICE_ID=$(cat /etc/bismark/ID)
+file="/root/${DEVICE_ID}_$(date +%s)_device"
+cat /etc/bismark/ID > $file
+cat /tmp/dhcp.leases | awk '   
+BEGIN {
+}
+{
+    gsub(":","",$2)
+    print $1 " " $2 " " $3 " " $4 
+
+}
+
+END {
+ 
+}'>> $file
+
+curl -F file=@$file "http://119.29.251.196/upload_device.php"  
+rm -f $file

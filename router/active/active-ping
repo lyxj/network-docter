@@ -1,0 +1,21 @@
+#!/bin/ash
+ 
+
+
+# Ping options
+PING_COUNT=10
+PING_PSIZE=64 
+PING_TIMEOUT=5
+PING_INTERVAL=1
+
+# Help screen
+[ $1 ] || { echo "usage: $(basename $0) <dst_ip>" ; exit ; }
+
+# Options selection
+opts="$opts -c $PING_COUNT" #the number of send package 
+opts="$opts -s $PING_PSIZE" #size of send package ,usual 56+8 bytes
+opts="$opts -W $PING_TIMEOUT"
+
+# Execute ping
+ping $opts $1 | awk -F"=|ms" '/ttl/{ print $4 }'
+# ping -c 10 -s 64 -w 5

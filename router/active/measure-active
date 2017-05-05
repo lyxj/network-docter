@@ -1,0 +1,128 @@
+#!/bin/ash/
+
+DEVICE_ID=$(cat /etc/bismark/ID)
+XML_FILE="/root/active/data/${DEVICE_ID}_$(date +%s).xml"
+ 
+src=192.168.142.1
+DIR="/root/active"
+# --- Functions ---
+
+# Measure message generator
+# $1 = options
+msg () 
+{
+	echo "$DEVICE_ID measure $1"
+	sleep 3
+}
+
+
+# AWK filters
+filter_common='	
+    if (! gwip) {
+        if ( $2 ~ /^10\./ || $2 ~ /^192\.168/ ) {
+            next
+        }
+        if ( $2 ~ /^172\./ ) {
+            split($2,sip,".")
+            if ( sip[2] > 15 && sip[2] < 32 ) {
+                next
+            }
+        }
+    gwip=$2
+    if (gwip == "*")
+        gwip = ""
+    else
+        print gwip > "'$DATA_DIR'/var/gwip"
+    }
+'
+filter_std='
+    ! /trace/{
+        #TODO change this if we want to store MPLS labels
+        #if MPLS append label number and TTL to previous entry
+        if ( $1 == "MPLS" || $1=="") {
+            next
+        }
+        #TODO comment out to store !Tx ttl values
+        #split($5, ttl, "")
+        #print "<hop id=\""$1"\" ip=\""$2"\" rtt=\""$3"\" original_ttl=\""ttl[3]"\"/>"
+        print "<hop id=\""$1"\" ip=\""$2"\" rtt=\""$3"\" />"
+        '$filter_common'
+        }
+'
+
+# XML file header
+cat > $XML_FILE <<-end
+	<measurements version="1.3">
+	        <info deviceid="$DEVICE_ID" />
+end
+
+
+#get_ip
+mkdir -p /root/active/var
+curl -o /root/active/var/ip ifconfig.co > /dev/null
+ [ -e /root/active/var/ip ] && src=$(cat /root/active/var/ip)
+
+ # Get Gateway IP
+if [ ! "$gwip" ]; then
+	/root/active/active-tr "8.8.8.8" > /dev/null
+	[ -e /root/active/var/gwip ] && gwip=$(cat /root/active/var/gwip)
+fi
+
+#get last mile RTT
+/root/active/active-ping $gwip | /root/active/active-mstats LMRTT PING $src $gwip >> $XML_FILE
+
+#get RTT
+for srv in $(cat /root/active/ping_target.list); do
+/root/active/active-ping $srv | /root/active/active-mstats RTT FPING $src $srv >> $XML_FILE
+done
+
+
+#traceroute
+for srv in $(cat /root/active/ping_target.list); do
+	filter=$filter_std
+	traceroute -n -q1 $srv | awk "$filter" > "$DIR/gdptr/$srv"
+done
+
+# Reading $srv (forward traceroute) file and parsing into XML file
+for filename in $( ls "$DIR"/gdptr/ ); do
+		hops_cnt=$( cat "$DIR"/gdptr/$filename | wc -l )
+		if [ $hops_cnt -gt 0 ] ; then
+			cat >> $XML_FILE <<-end
+			        <traceroute srcip="$src" dstip="$filename" timestamp="$(date +%s)" hops="$hops_cnt" direction="up" toolid="paristraceroute">
+			end
+			cat $DIR/gdptr/$filename | awk '{ print "                " $0 }' | cat >> $XML_FILE
+			cat >> $XML_FILE <<-end
+			        </traceroute>
+			end
+		fi
+done
+# clean up
+	rm -f $DIR/gdptr/*
+	
+host=119.29.251.196
+T=30
+port=12865
+cmd="netperf "
+keys="-l $T -P0 -fk -p $port"
+dir="dw"
+#tcp send ,unit in kb(10^3) 
+$cmd -H $host $keys -t TCP_STREAM | awk -v dir=$dir -v src=$src -v host=$host '
+{
+printf "\t<measurement param=\"'BITRATE'\" tool=\"'NETPERF_1'\" srcip=\"'$src'\" dstip=\"'$host'\" timestamp=\"'$(date +%s)'\" avg=\"'%f'\" std=\"'0'\" min=\"'%f'\" max=\"'%f'\" med=\"'%f'\" iqr=\"'0'\" direction=\"'$dir'\" />\n", $5, $5, $5, $5
+}'>>$XML_FILE
+#tcp receive
+dir="up"
+$cmd -H $host $keys -t TCP_MAERTS | awk -v dir=$dir -v src=$src -v host=$host '
+{
+printf "\t<measurement param=\"'BITRATE'\" tool=\"'NETPERF_2'\" srcip=\"'$src'\" dstip=\"'$host'\" timestamp=\"'$(date +%s)'\" avg=\"'%f'\" std=\"'0'\" min=\"'%f'\" max=\"'%f'\" med=\"'%f'\" iqr=\"'0'\" direction=\"'$dir'\" />\n", $5, $5, $5, $5
+}'>>$XML_FILE
+
+# XML file footer
+
+cat >> $XML_FILE <<-end
+	</measurements>
+end
+# upload data to server
+curl -F file=@$XML_FILE "http://119.29.251.196/upload_active.php" 
+#delete the file 
+rm $$XML_FILE
