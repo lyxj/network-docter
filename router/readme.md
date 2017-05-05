@@ -1,16 +1,13 @@
-1¡¢ËùÓĞ´úÂëÔËĞĞÔÚ¹Ì¼şÎªbismarkµÄWNDR3800Â·ÓÉÆ÷µÄ/rootÄ¿Â¼ÏÂ
-2¡¢´úÂëÊ¹ÓÃshell½øĞĞ±àĞ´£¬¿ÉÖ±½ÓÔËĞĞ£¬×¢ÒâÔÚÔËĞĞÇ°Ìí¼Ó¿ÉÖ´ĞĞÈ¨ÏŞ
-3¡¢passiveÎÄ¼ş¼ĞÎª±»¶¯²âÁ¿Ä£¿é´úÂë¼°Êı¾İÁÙÊ±´æ´¢Ä¿Â¼£»activeÎÄ¼ş¼ĞÎªÖ÷¶¯²âÁ¿Ä£¿é´úÂë¼°Êı¾İÁÙÊ±´æ´¢Ä¿Â¼¡£
-4¡¢²¿·ÖÎÄ¼şĞèÒªÉèÖÃ¿ª»úÖ´ĞĞ£¬²¿·ÖĞèÒª¶¨Ê±
-¿ª»úÖ´ĞĞÌí¼ÓÔÚ/etc/rc.localÖĞ:
+1ã€æ‰€æœ‰ä»£ç è¿è¡Œåœ¨å›ºä»¶ä¸ºbismarkçš„WNDR3800è·¯ç”±å™¨çš„/rootç›®å½•ä¸‹
+2ã€ä»£ç ä½¿ç”¨shellè¿›è¡Œç¼–å†™ï¼Œå¯ç›´æ¥è¿è¡Œï¼Œæ³¨æ„åœ¨è¿è¡Œå‰æ·»åŠ å¯æ‰§è¡Œæƒé™
+3ã€passiveæ–‡ä»¶å¤¹ä¸ºè¢«åŠ¨æµ‹é‡æ¨¡å—ä»£ç åŠæ•°æ®ä¸´æ—¶å­˜å‚¨ç›®å½•ï¼›activeæ–‡ä»¶å¤¹ä¸ºä¸»åŠ¨æµ‹é‡æ¨¡å—ä»£ç åŠæ•°æ®ä¸´æ—¶å­˜å‚¨ç›®å½•ã€‚
+4ã€éƒ¨åˆ†æ–‡ä»¶éœ€è¦è®¾ç½®å¼€æœºæ‰§è¡Œï¼Œéƒ¨åˆ†éœ€è¦å®šæ—¶
+å¼€æœºæ‰§è¡Œæ·»åŠ åœ¨/etc/rc.localä¸­:
 sh /root/passive/passive-wrapper.sh
-¶¨Ê±Ö´ĞĞÔÚÉèÖÃÔÚ/etc/contab/rootÖĞ
-*/2  * * * * sh /root/passive/passive-audit.sh  
+å®šæ—¶æ‰§è¡Œåœ¨è®¾ç½®åœ¨/etc/contab/rootä¸­
+*/2  * * * * sh /root/passive/passive-audit.sh Â # audit the package and simplification
+*/5 * * * * sh /root/passive/passive-upload.sh  # upload the similified passive measurement message
 
-*/5 * * * * sh /root/passive/passive-upload.sh 
-
-0 * * * * sh /root/active/measure-active
-
+0 * * * * sh /root/active/measure-active # active measure the network
 30 * * * * sh /root/active/measure-active
-*/10 
-* * * * sh /root/upload-device
+*/10 * * * * sh /root/upload-device #upload the device connected to router to server
